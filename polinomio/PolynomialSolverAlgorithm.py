@@ -152,10 +152,11 @@ class PSmodel():
             Child1 will consist on father's binary value from position 0 to pivot, and mother's binary value from pivot to last position
             Child2, on the other hand, will consist on mothers's binary value from position 0 to pivot, and fathers's binary value from pivot to last position
         '''
-        def cromosome_to_binary(cromosome):
+        def cromosome_to_binary(cromosome, gen_bit_length):
             result = ""
+            format_schema = "{0:" + "{0:02d}".format(gen_bit_length) + "b}"
             for gen in cromosome:
-                result += "{0:08b}".format(gen)
+                result += format_schema.format(gen)
             return result
 
         def binary_to_cromosome(binary, gen_bit_length):
@@ -167,11 +168,11 @@ class PSmodel():
 
 
         # Get random pivot which will divide the cromosome
-        pivot = random.randrange(1, self.gen_bit_length*3)
+        pivot = random.randrange(1, self.gen_bit_length * self.cromosome_size)
 
         # Convert each cromsome to it's binary equivalent. This get the binary value of each gen and will merge them into one
-        father_binary = cromosome_to_binary(father)
-        mother_binary = cromosome_to_binary(mother)
+        father_binary = cromosome_to_binary(father, self.gen_bit_length)
+        mother_binary = cromosome_to_binary(mother, self.gen_bit_length)
 
         # Do the breeding
         child1_binary = father_binary[:pivot] + mother_binary[pivot:]
@@ -299,6 +300,7 @@ class PSmodel():
             self.print_population(debuglevel=2)
             self.log("----fittiest = {} : {}".format(str(fittiest), fittiest_aptitud), 2)
 
+        print(self.fittiests_history)
         self.graph_history()
         self.fittiest = fittiest
 
