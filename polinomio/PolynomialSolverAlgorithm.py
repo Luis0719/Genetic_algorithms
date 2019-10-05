@@ -46,7 +46,7 @@ class PSmodel():
 
     def evaluate(self, cromosome):
         '''
-            Calculate the resulting absolute value for the equation Ax^2 + Bx + C - 13, where A,B and C are each value from the population's array. 
+            Calculate the resulting absolute value for the equation Ax^2 + Bx + C - {target}, where A,B and C are each value from the population's array. 
             Each cromosome consistes of an array in the form of: Cromosome = [A, B, C]
             The result will be the error from the result to the target
         '''
@@ -71,11 +71,9 @@ class PSmodel():
         temp_population = [0] * self.population_size
         for i in range(self.population_size):
             # Use random library to generate a shuffled copy of the samples and add at the end the element '0' which will contain the 'aptitud function' value
-            temp_population[i] = [
-                random.randrange(0, max_value),
-                random.randrange(0, max_value),
-                random.randrange(0, max_value)
-            ]
+            temp_population[i] = [0] * self.cromosome_size
+            for j in range(self.cromosome_size):
+                temp_population[i][j] = random.randrange(0, max_value)
 
         return temp_population
 
@@ -252,7 +250,7 @@ class PSmodel():
             return
 
         plt.rcParams.update({'font.size': 6})
-        plt.plot(list(self.fittiests_history.keys()), list(self.fittiests_history.values()))
+        plt.plot([i+1 for i in range(self.generations)], self.fittiests_history)
         plt.ylabel('Error')
         plt.xlabel('Generations')
         plt.show()
@@ -264,7 +262,7 @@ class PSmodel():
         '''
         # Initialize aptituds list. This will store all the values of the aptitud function
         self.aptituds = [0] * self.population_size
-        self.fittiests_history = {}
+        self.fittiests_history = []
 
         # Get initial population randomly and store it in the global variable
         self.population = self.generate_population()
@@ -294,16 +292,16 @@ class PSmodel():
 
             # Get fittiest to make the graph
             fittiest_aptitud, fittiest = self.get_fittiest()
-            self.fittiests_history[str(i+1)] = fittiest_aptitud
+            self.fittiests_history.append(fittiest_aptitud)
 
             # self.graph_history()
             self.log("---------Generation {:d}".format(i+1), 2)
             self.print_population(debuglevel=2)
             self.log("----fittiest = {} : {}".format(str(fittiest), fittiest_aptitud), 2)
 
-        print(self.fittiests_history)
         self.graph_history()
         self.fittiest = fittiest
+
         return fittiest
 
 
