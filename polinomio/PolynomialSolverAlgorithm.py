@@ -19,7 +19,7 @@ logger = open('logs.log', 'w')
 
     
 class PSmodel():
-    def __init__(self, population_size, generations=100, competidors_percentage=0.05, gen_bit_length=8, x_value=2, target_value=13, debuglevel=0):
+    def __init__(self, population_size, x_value, target_value, cromosome_size, resolution=50, generations=100, competidors_percentage=0.05, gen_bit_length=8, debuglevel=0):
         # Validate population size to be an even number
         if population_size % 2 == 1:
             raise Exception("Population size must be an even number")
@@ -30,28 +30,30 @@ class PSmodel():
             raise Exception("Competidor percentage must be a number between 0.1 and 0.99")
         self.competidors_percentage = competidors_percentage
 
-        self.population = None
+        self.x = x_value
+        self.target = target_value
+        self.cromosome_size = cromosome_size
         self.generations = generations
+        self.gen_bit_length = gen_bit_length
+        self.resolution = resolution
+        self.debuglevel = debuglevel
+
+        self.population = None
         self.aptituds = []    # Stores the aptitud values from each cromosome
         self.fittiests_history = None
         self.fittiest = None
-        self.gen_bit_length = gen_bit_length
-        self.x = x_value
-        self.target = target_value
-        self.debuglevel = debuglevel
     
 
-    @classmethod
-    def evaluate(cls, cromosome, x, target, resolution=50):
+    def evaluate(self, cromosome):
         '''
             Calculate the resulting absolute value for the equation Ax^2 + Bx + C - 13, where A,B and C are each value from the population's array. 
             Each cromosome consistes of an array in the form of: Cromosome = [A, B, C]
             The result will be the error from the result to the target
         '''
-        A_result = (cromosome[0] / resolution) * (x**2)
-        B_result = (cromosome[1] / resolution) * x
-        C_result = (cromosome[2] / resolution)
-        return abs(A_result + B_result + C_result - 13)
+        A_result = (cromosome[0] / self.resolution) * (self.x**2)
+        B_result = (cromosome[1] / self.resolution) * self.x
+        C_result = (cromosome[2] / self.resolution)
+        return abs(A_result + B_result + C_result - self.target)
 
 
     def log(self, text, debuglevel=0, logtype="INFO"):
@@ -99,7 +101,7 @@ class PSmodel():
             Calculate the aptitud function for each cromosome and store the result in the last position of the list
         '''
         for i in range(self.population_size):
-            self.aptituds[i] = PSmodel.evaluate(self.population[i], self.x, self.target)
+            self.aptituds[i] = self.evaluate(self.population[i])
 
 
     def tournament_compete(self, total_competidors):
@@ -243,7 +245,7 @@ class PSmodel():
         self.log('------end of breeding-------')
         return newpopulation
 
-    #TODO
+
     def graph_history(self):
         if not plt_found:
             print("Matplotlib libary not found. Install it to see the graph. Install: 'pip install matplotlib'")
@@ -256,7 +258,6 @@ class PSmodel():
         plt.show()
 
     
-    #TODO
     def fit(self):
         '''
             Main method of the algorithm. This method will coordinate each step to make the ordinary genetic algorithm work
@@ -306,7 +307,6 @@ class PSmodel():
         return fittiest
 
 
-    #TODO
     def print_population(self, population=None, debuglevel=0):
         '''
             Used for debug
