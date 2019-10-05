@@ -68,8 +68,6 @@ def operator2(cromosome):
     return cromosome
 
 def breeder_factory(option, cromosome):
-    return operator2(cromosome)
-    
     if option == 0:
         return operator1(cromosome)
     
