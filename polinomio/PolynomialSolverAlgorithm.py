@@ -39,7 +39,6 @@ class PSmodel():
         self.debuglevel = debuglevel
 
         self.population = None
-        self.aptituds = []    # Stores the aptitud values from each cromosome
         self.fittiests_history = None
         self.fittiest = None
     
@@ -71,7 +70,7 @@ class PSmodel():
         temp_population = [0] * self.population_size
         for i in range(self.population_size):
             # Use random library to generate a shuffled copy of the samples and add at the end the element '0' which will contain the 'aptitud function' value
-            temp_population[i] = [0] * self.cromosome_size
+            temp_population[i] = [0] * (self.cromosome_size + 1)
             for j in range(self.cromosome_size):
                 temp_population[i][j] = random.randrange(0, max_value)
 
@@ -80,26 +79,19 @@ class PSmodel():
 
     def get_fittiest(self):
         fittiest = None
-        fittiest_aptitud = 0
-        for i in range(self.population_size):
-            if fittiest == None: 
-                fittiest = self.population[i]
-                fittiest_aptitud = self.aptituds[i]
-                continue
-            
-            if self.aptituds[i] < fittiest_aptitud:
-                fittiest = self.population[i]
-                fittiest_aptitud = self.aptituds[i]
+        for cromosome in self.population:
+            if fittiest == None or cromosome[-1] < fittiest[-1]: 
+                fittiest = cromosome
 
-        return fittiest_aptitud, fittiest
+        return fittiest
 
 
     def calculate_aptitud_function(self):
         '''
             Calculate the aptitud function for each cromosome and store the result in the last position of the list
         '''
-        for i in range(self.population_size):
-            self.aptituds[i] = self.evaluate(self.population[i])
+        for cromosome in self.population:
+            cromosome[-1] = self.evaluate(cromosome)
 
 
     def tournament_compete(self, total_competidors):
@@ -109,20 +101,14 @@ class PSmodel():
         '''
         self.log("-----start of tournament with {:d} competidors-----".format(total_competidors))
         winner = None
-        winner_aptitud = None
         for i in range(total_competidors):
             rndindex = random.randrange(self.population_size)
-            self.log("{} = {}".format(str(self.population[rndindex]), self.aptituds[rndindex]))
+            self.log("{}".format(str(self.population[rndindex])))
 
             # If there's still no winner (first item in the loop) just assign it to be the temporal winner
-            if winner == None:
+            if winner == None or self.population[rndindex][-1] < winner[-1]:
                 winner = self.population[rndindex]
-                winner_aptitud = self.aptituds[rndindex]
                 continue
-
-            if self.aptituds[rndindex] < winner_aptitud:
-                winner = self.population[rndindex]
-                winner_aptitud = self.aptituds[rndindex]
 
         self.log("Winner = {}".format(str(winner)))
         self.log("-----end of tournament-----")
@@ -155,8 +141,8 @@ class PSmodel():
         def cromosome_to_binary(cromosome, gen_bit_length):
             result = ""
             format_schema = "{0:" + "{0:02d}".format(gen_bit_length) + "b}"
-            for gen in cromosome:
-                result += format_schema.format(gen)
+            for i in range(len(cromosome)-1):
+                result += format_schema.format(cromosome[i])
             return result
 
         def binary_to_cromosome(binary, gen_bit_length):
@@ -179,54 +165,10 @@ class PSmodel():
         child2_binary = mother_binary[:pivot] + father_binary[pivot:]
 
         # Split the final binary value into each gen
-        child1 = binary_to_cromosome(child1_binary, self.gen_bit_length)
-        child2 = binary_to_cromosome(child2_binary, self.gen_bit_length)
+        child1 = binary_to_cromosome(child1_binary, self.gen_bit_length) + [0]
+        child2 = binary_to_cromosome(child2_binary, self.gen_bit_length) + [0]
 
         self.log("{} & {} ({:d})= {} & {}".format(str(father), str(mother), pivot, str(child1), str(child2)), 2)
-        
-        return child1, child2
-
-
-    def breeding_operator2(self, father, mother):
-        '''
-            This breeding method will get a pivot randomely and will use it to 'break' each cromosome (father's and mother's cromosomes)
-            Child1 will consist on father's binary value from position 0 to pivot, and mother's binary value from pivot to last position
-            Child2, on the other hand, will consist on mothers's binary value from position 0 to pivot, and fathers's binary value from pivot to last position
-        '''
-        def cromosome_to_binary(cromosome):
-            result = ""
-            for gen in cromosome:
-                result += "{0:08b}".format(gen)
-            return result
-
-        def binary_to_cromosome(binary, gen_bit_length):
-            result = []
-            for i in range(0, len(binary), gen_bit_length):
-                result.append(int(binary[i:i+gen_bit_length], 2))
-
-            return result
-
-
-        # Get random pivot which will divide the cromosome
-        pivot1 = random.randrange(1, self.gen_bit_length*3)
-        pivot2 = random.randrange(1, self.gen_bit_length*3)
-        if pivot1 > pivot2:
-            pivot1, pivot2 = pivot2, pivot1
-            
-
-        # Convert each cromsome to it's binary equivalent. This get the binary value of each gen and will merge them into one
-        father_binary = cromosome_to_binary(father)
-        mother_binary = cromosome_to_binary(mother)
-
-        # Do the breeding
-        child1_binary = father_binary[:pivot1] + mother_binary[pivot1:pivot2] + father_binary[pivot2:]
-        child2_binary = mother_binary[:pivot1] + father_binary[pivot1:pivot2] + mother_binary[pivot2:]
-
-        # Split the final binary value into each gen
-        child1 = binary_to_cromosome(child1_binary, self.gen_bit_length)
-        child2 = binary_to_cromosome(child2_binary, self.gen_bit_length)
-
-        self.log("{} & {} ({:d}, {:d})= {} & {}".format(str(father), str(mother), pivot1, pivot2, str(child1), str(child2)))
         
         return child1, child2
 
@@ -286,21 +228,20 @@ class PSmodel():
 
             # from the winners of the tournament, get new cromosomes by a 'breeding' process and overwrite the actual population with the new population originated from the 'winners'
             self.population = self.breed(fathers, mothers)
-            self.aptituds = [0] * self.population_size  # Reset aptitud values
 
             # Calculate the aptitud function for each new cromosome
             self.calculate_aptitud_function()
 
             # Get fittiest to make the graph
-            fittiest_aptitud, fittiest = self.get_fittiest()
-            self.fittiests_history.append(fittiest_aptitud)
+            fittiest = self.get_fittiest()
+            self.fittiests_history.append(fittiest[-1])
 
             # self.graph_history()
             self.log("---------Generation {:d}".format(i+1), 2)
             self.print_population(debuglevel=2)
-            self.log("----fittiest = {} : {}".format(str(fittiest), fittiest_aptitud), 2)
+            self.log("----fittiest = {}".format(str(fittiest)), 2)
 
-        print(self.fittiests_history)
+        self.log(self.fittiests_history, 2)
         self.graph_history()
         self.fittiest = fittiest
 
@@ -315,7 +256,7 @@ class PSmodel():
             population = self.population
 
         for i in range(len(population)):
-            self.log(str(population[i]) + " = " + str(self.aptituds[i]), debuglevel)
+            self.log(str(population[i]), debuglevel)
 
 
     def tester(self, args1, args2):
