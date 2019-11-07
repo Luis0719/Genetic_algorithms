@@ -105,3 +105,8 @@ venv.bak/
 
 # custom
 Results.docx
+
+.vscode
+logs.log
+polinomio/__pycache__
+polinomio2/__pycache__
